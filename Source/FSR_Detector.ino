@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 // Pin layout copied from pins.arduino.h for convience, and then added how the pins are
 // connected on the circuit board.
 //
@@ -10,7 +12,7 @@
 // NC/IO3        *(D  6) PB3  4|    |17  PA3 (D 14)
 //                       VCC  5|    |16  AGND
 //                       GND  6|    |15  AVCC
-// SN1/IO2        (D  5) PB4  7|    |14  PA4 (D 10)           LED4
+// SN1/IO2        (D  5) PB4  7|    |14  PA4 (D 10)           LEDTRIGGER
 // SN2/IO1       *(D  4) PB5  8|    |13  PA5 (D 11)           LED3
 // SIG       INT0 (D  3) PB6  9|    |12  PA6 (D 12)           LED2
 // RST            (D 15) PB7 10|    |11  PA7 (D 13)           LED1
@@ -22,11 +24,11 @@
 // Define the pins that have LEDs on them. We have one LED for each of the three FSRs to indicate
 // when each FSR is triggered. And one power/end stop LED that is on until any of the FSRs are
 // triggered.
-#define LED1        13
-#define LED2        12
-#define LED3        11
+#define LED1        12
+#define LED2        11
+#define LED3        10
 
-#define LEDTRIGGER  10
+#define LEDTRIGGER  9
 #define ENDSTOP     3
 
 // Define the pins used for the analog inputs that have the FSRs attached. These have external
@@ -52,7 +54,7 @@
 //   0       1          0.85
 //   1       0          0.95
 //   1       1          0.92
-const float thresholds[] = { 0.80, 0.85, 0.95, 0.92 };
+const float thresholds[] = { 0.80, 0.85, 0.95, 0.8 };
 
 short fsrLeds[] = { LED1, LED2, LED3 };     // Pins for each of the LEDs next to the FSR inputs
 short fsrPins[] = { FSR1, FSR2, FSR3 };     // Pins for each of the FSR analog inputs
@@ -87,7 +89,7 @@ void SetOutput(short fsr, bool state)
         any |= triggered[fsr];
     }
 
-    digitalWrite(LEDTRIGGER, any ? LOW : HIGH);
+    digitalWrite(LEDTRIGGER, any ? HIGH : LOW);
 
     // For the end stop, we need to check the NC jumpper to see if we need to invert
     // the output.
@@ -166,7 +168,7 @@ void setup()
     // Set the green combined LED to on so it acts as a power-on indicator. We'll turn it
     // off whenever we trigger the end stop.
     pinMode(LEDTRIGGER, OUTPUT);
-    digitalWrite(LEDTRIGGER, HIGH);
+    digitalWrite(LEDTRIGGER, LOW);
 
     // Set the endstop pin to be an output that is set for NC
     pinMode(ENDSTOP, OUTPUT);
@@ -206,7 +208,7 @@ uint16_t UpdateLongSamples(short fsr, int avg)
     {
         total += longSamples[fsr][i];
     }
-    
+
     longAverage[fsr] = total / LONG_SIZE;
 
     lastLongTime[fsr] = millis();
@@ -263,4 +265,3 @@ void loop()
         CheckIfTriggered(fsr);
     }
 };
-
